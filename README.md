@@ -8,6 +8,8 @@ A tool to switch between virtual desktops on Windows 10 by using the mouse.
 ## Usage
 - You can switch between virtual desktops by placing the mouse cursor on the left/right edge of the screen
 
+## License
+MIT
   
   
   
@@ -21,3 +23,6 @@ Windows 10 の仮想画面をマウスで切り替えるツールです。
 
 ## 使用方法
 - マウスカーソルを画面の左右の端に置くと仮想画面を切り替えれます
+
+## ライセンス
+MIT
