@@ -143,6 +143,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VDS.h" />
+    <ClInclude Include="VirtualDesktopsAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VDS.cpp" />
