@@ -256,7 +256,6 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     }
     pServiceProvider->Release();
 
-
     // get edge position
     RECT rect;
     rect.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -301,6 +300,7 @@ void Uninit(HWND hWnd) {
 
     // destroy menu for tasktray
     DestroyMenu(l_menuTaskTray);
+
 }
 
 // returns 0 if error
@@ -334,8 +334,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //--    CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
     //-- {
+#ifdef _DEBUG
+    #define WINDOW_WIDTH CW_USEDEFAULT
+    #define WINDOW_HEIGHT CW_USEDEFAULT
+#else // _DEBUG
     #define WINDOW_WIDTH (320)
     #define WINDOW_HEIGHT (128)
+#endif // _DEBUG
     HWND hWnd = CreateWindowExW(
                        WS_EX_TOOLWINDOW,
                        szWindowClass, szTitle,
@@ -364,14 +369,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 //-- {
 
-// return ture if scceeded
-bool SwitchDesktopLeftRight(bool bLeft) {
-    bool bResult = false;
+VirtualDesktops::API::IVirtualDesktop* GetDesktopLeftRight(bool bLeft) {
 
     VirtualDesktops::API::IVirtualDesktop* pDesktop = nullptr;
     HRESULT hr = l_pVirtualDesktopManagerInternal->GetCurrentDesktop(&pDesktop);
     if (FAILED(hr)) {
-        return bResult;
+        return NULL;
     }
 
     VirtualDesktops::API::IVirtualDesktop* pAdjacentDesktop = nullptr;
@@ -380,24 +383,76 @@ bool SwitchDesktopLeftRight(bool bLeft) {
         bLeft ? VirtualDesktops::API::AdjacentDesktop::LeftDirection : VirtualDesktops::API::AdjacentDesktop::RightDirection,
         &pAdjacentDesktop);
 
+    pDesktop->Release();
+
     if (FAILED(hr)) {
-        return bResult;
+        return NULL;
     }
 
     GUID guid;
     hr = pAdjacentDesktop->GetID(&guid);
     if (SUCCEEDED(hr)) {
-        l_pVirtualDesktopManagerInternal->SwitchDesktop(pAdjacentDesktop);
-        bResult = true;
+        return pAdjacentDesktop;        // need to release
     }
 
     pAdjacentDesktop->Release();
+    return NULL;
+}
 
-    return bResult;
+
+#define BIT_PRESSED (0x8000)
+
+bool SwitchDesktopLeftRight(bool bLeft, POINT pointCursor) {
+
+    VirtualDesktops::API::IVirtualDesktop* pAdjacentDesktop = GetDesktopLeftRight(bLeft);
+    if (pAdjacentDesktop != NULL) {
+
+        HWND hWndForeground = NULL;
+        long lExStyle = 0;
+        RECT rect;
+        if (GetKeyState(VK_LBUTTON) & BIT_PRESSED) {
+            hWndForeground = GetForegroundWindow();
+
+            GetWindowRect(hWndForeground, &rect);
+            #define WIDTH_FRAME (16)
+            if (rect.left + WIDTH_FRAME < pointCursor.x
+                    && rect.right - WIDTH_FRAME > pointCursor.x
+                    && rect.top < pointCursor.y
+                    && rect.bottom > pointCursor.y) {
+                Log(L"hWndForeground=%08X", hWndForeground);
+                lExStyle = GetWindowLong(hWndForeground, GWL_EXSTYLE);
+                SetWindowLong(hWndForeground, GWL_EXSTYLE, WS_EX_TOOLWINDOW);   // change ex-style to move desktop
+            }
+            else {
+                hWndForeground = NULL;
+            }
+        }
+
+        // switch desktop
+        l_pVirtualDesktopManagerInternal->SwitchDesktop(pAdjacentDesktop);
+        pAdjacentDesktop->Release();
+
+        // move cursor and window
+        int nCursorX = bLeft ? (l_nEdgeRight - 1) : (l_nEdgeLeft + 1);
+        int dx = pointCursor.x - nCursorX;
+
+        if (hWndForeground != NULL) {
+            SetWindowLong(hWndForeground, GWL_EXSTYLE, lExStyle);   // restore ex-style
+            SetWindowPos(hWndForeground, HWND_TOP, rect.left - dx, rect.top, 0, 0, SWP_NOSIZE); 
+        }
+        SetCursorPos(nCursorX, pointCursor.y);
+
+
+        return TRUE;
+    }
+    else {
+        return FALSE;
+    }
 }
 
 
 void wm_timer(HWND hWnd) {
+
 
     // draw logs
     if (l_nLogIndex != l_nLogIndexPrev) {
@@ -406,9 +461,7 @@ void wm_timer(HWND hWnd) {
     }
 
     // check mouse button
-#define BIT_PRESSED (0x8000)
-    if (GetKeyState(VK_LBUTTON) & BIT_PRESSED
-        || GetKeyState(VK_RBUTTON) & BIT_PRESSED
+    if (GetKeyState(VK_RBUTTON) & BIT_PRESSED
         || GetKeyState(VK_MBUTTON) & BIT_PRESSED) {
         l_nEdgeCount = 0;
         return;
@@ -432,6 +485,9 @@ void wm_timer(HWND hWnd) {
 
     //Log(L"pt.x=%d", pt.x);
 
+
+
+
        // check if cursor is placed on the edge of the screen
     if (pt.x == l_nEdgeLeft || pt.x == l_nEdgeRight || pt.x == l_nEdgeRight + 1) {  // +1 is needed on several case
         ++l_nEdgeCount;
@@ -443,15 +499,13 @@ void wm_timer(HWND hWnd) {
         if (l_nEdgeCount >= l_nIntervalCount) {
             l_nEdgeCount = 0;
             if (pt.x == l_nEdgeLeft) {
-                if (SwitchDesktopLeftRight(true)) {
+                if (SwitchDesktopLeftRight(true, pt)) {
                     Log(L"switched to the left desktop");
-                    SetCursorPos(l_nEdgeRight - 1, pt.y);
                 }
             }
             else /* if (pt.x == l_nEdgeRight || pt.x == l_nEdgeRight + 1) */ {
-                if (SwitchDesktopLeftRight(false)) {
+                if (SwitchDesktopLeftRight(false, pt)) {
                     Log(L"switched to the right desktop");
-                    SetCursorPos(l_nEdgeLeft + 1, pt.y);
                 }
             }
         }
