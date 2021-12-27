@@ -109,7 +109,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_VDS, szWindowClass, MAX_LOADSTRING);
 
     //-- {
-    // check if already launched
+    // Check if already launched
     HWND hWnd = FindWindow(szWindowClass, szTitle);
     if (hWnd) {
         SetForegroundWindow(hWnd);
@@ -193,17 +193,17 @@ void Log(const WCHAR* fmt, ...) {
 
 void ReadIniFile(void)
 {
-    // get filename of exe
+    // Get filename of exe
     WCHAR szBuf[_MAX_PATH];
     GetModuleFileName(GetModuleHandle(NULL), szBuf, ARRAY_SIZE_OF(szBuf));
 
-    // remove filename
+    // Remove filename
     WCHAR* p = wcsrchr(szBuf, L'\\');
     if (p) {
         *(p + 1) = L'\0';
     }
 
-    // concatenate filename of ini
+    // Concatenate filename of ini
     wcscat_s(szBuf, L"VDS.ini");
 
     #define INI_SECTION_NAME L"Virtual Desktop Switcher"
@@ -241,11 +241,11 @@ void LoadMenuTaskTray(HINSTANCE hInstance)
 
 int Init(HINSTANCE hInstance, HWND hWnd) {
 
-    // read ini file
+    // Read ini file
     ReadIniFile();
     Log(L"duration=%d..%d", l_nInterval * l_nIntervalCount, l_nInterval * (l_nIntervalCount + 1));
 
-    // for virtual desktop api
+    // Get virtual desktop api
     IServiceProvider* pServiceProvider = NULL;
     HRESULT hResult = ::CoCreateInstance(CLSID_ImmersiveShell, NULL, CLSCTX_LOCAL_SERVER, __uuidof(IServiceProvider), (PVOID*)&pServiceProvider);
     if (FAILED(hResult)) {
@@ -257,7 +257,7 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     }
     pServiceProvider->Release();
 
-    // get edge position
+    // Get edge position
     RECT rect;
     rect.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     rect.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -274,13 +274,13 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     l_nEdgeRight = rect.right;
     Log(L"left=%d, right=%d", l_nEdgeLeft, l_nEdgeRight);
 
-    // load menu for tasktray
+    // Load menu for tasktray
     LoadMenuTaskTray(hInstance);
 
-    // add tasktray icon
+    // Add tasktray icon
     AddTaskTrayIcon(hInstance, hWnd);
 
-    // set timer
+    // Set timer
     SetTimer(hWnd, ID_TIMER, l_nInterval, (TIMERPROC)NULL);
 
     return S_OK;
@@ -288,33 +288,24 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
 
 void Uninit(HWND hWnd) {
 
-    // for virtual desktop api
+    // Release virtual desktop api
     if (l_pVirtualDesktopManagerInternal) {
         l_pVirtualDesktopManagerInternal->Release();
     }
 
-    // kill timer
+    // Kill timer
     KillTimer(hWnd, ID_TIMER);
 
-    // delete tasktray icon
+    // Delete tasktray icon
     DeleteTaskTrayIcon(hWnd);
 
-    // destroy menu for tasktray
+    // Destroy menu for tasktray
     DestroyMenu(l_menuTaskTray);
 
 }
 
-// returns 0 if error
-int VD_GetCount(void) {
-    if (l_pVirtualDesktopManagerInternal) {
-        UINT count;
-        l_pVirtualDesktopManagerInternal->GetCount(&count);
-        return count;
-    }
-    return 0;
-}
-
 //-- }
+
 
 
 //
@@ -368,6 +359,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
+
+
 //-- {
 
 VirtualDesktops::API::IVirtualDesktop* GetDesktopLeftRight(bool bLeft) {
@@ -393,7 +386,7 @@ VirtualDesktops::API::IVirtualDesktop* GetDesktopLeftRight(bool bLeft) {
     GUID guid;
     hr = pAdjacentDesktop->GetID(&guid);
     if (SUCCEEDED(hr)) {
-        return pAdjacentDesktop;        // need to release
+        return pAdjacentDesktop;        // Need to be released
     }
 
     pAdjacentDesktop->Release();
@@ -408,6 +401,7 @@ bool SwitchDesktopLeftRight(bool bLeft, POINT pointCursor) {
     VirtualDesktops::API::IVirtualDesktop* pAdjacentDesktop = GetDesktopLeftRight(bLeft);
     if (pAdjacentDesktop != NULL) {
 
+        // Check dragging
         HWND hWndForeground = NULL;
         long lExStyle = 0;
         RECT rect;
@@ -421,28 +415,27 @@ bool SwitchDesktopLeftRight(bool bLeft, POINT pointCursor) {
                     && rect.top < pointCursor.y
                     && rect.bottom > pointCursor.y) {
                 Log(L"hWndForeground=%08X", hWndForeground);
-                lExStyle = GetWindowLong(hWndForeground, GWL_EXSTYLE);
-                SetWindowLong(hWndForeground, GWL_EXSTYLE, WS_EX_TOOLWINDOW);   // change ex-style to move desktop
+                lExStyle = GetWindowLong(hWndForeground, GWL_EXSTYLE);   // Get current ex-style
+                SetWindowLong(hWndForeground, GWL_EXSTYLE, WS_EX_TOOLWINDOW);   // Change ex-style to move desktop
             }
             else {
                 hWndForeground = NULL;
             }
         }
 
-        // switch desktop
+        // Switch desktop
         l_pVirtualDesktopManagerInternal->SwitchDesktop(pAdjacentDesktop);
         pAdjacentDesktop->Release();
 
-        // move cursor and window
+        // Move cursor and window if dragging
         int nCursorX = bLeft ? (l_nEdgeRight - 1) : (l_nEdgeLeft + 1);
         int dx = pointCursor.x - nCursorX;
 
         if (hWndForeground != NULL) {
-            SetWindowLong(hWndForeground, GWL_EXSTYLE, lExStyle);   // restore ex-style
+            SetWindowLong(hWndForeground, GWL_EXSTYLE, lExStyle);   // Restore ex-style
             SetWindowPos(hWndForeground, HWND_TOP, rect.left - dx, rect.top, 0, 0, SWP_NOSIZE); 
         }
         SetCursorPos(nCursorX, pointCursor.y);
-
 
         return TRUE;
     }
@@ -454,42 +447,37 @@ bool SwitchDesktopLeftRight(bool bLeft, POINT pointCursor) {
 
 void wm_timer(HWND hWnd) {
 
-
-    // draw logs
+    // Draw logs
     if (l_nLogIndex != l_nLogIndexPrev) {
         InvalidateRect(hWnd, NULL, true);
         l_nLogIndexPrev = l_nLogIndex;
     }
 
-    // check mouse button
+    // Check mouse button
     if (GetKeyState(VK_RBUTTON) & BIT_PRESSED
         || GetKeyState(VK_MBUTTON) & BIT_PRESSED) {
         l_nEdgeCount = 0;
         return;
     }
 
-    // check shift key if needed
+    // Check shift key if needed
     if (l_bNeedShift && !(GetKeyState(VK_SHIFT) & BIT_PRESSED)) {
         l_nEdgeCount = 0;
         return;
     }
 
-    // check control key if needed
+    // Check control key if needed
     if (l_bNeedControl && !(GetKeyState(VK_CONTROL) & BIT_PRESSED)) {
         l_nEdgeCount = 0;
         return;
     }
 
-    // get cursor position
+    // Get cursor position
     POINT pt;
     GetCursorPos(&pt);
 
-    //Log(L"pt.x=%d", pt.x);
 
-
-
-
-       // check if cursor is placed on the edge of the screen
+    // Check if cursor is placed on the edge of the screen
     if (pt.x == l_nEdgeLeft || pt.x == l_nEdgeRight || pt.x == l_nEdgeRight + 1) {  // +1 is needed on several case
         ++l_nEdgeCount;
 
@@ -514,11 +502,10 @@ void wm_timer(HWND hWnd) {
     else {
         l_nEdgeCount = 0;
     }
-
-
 }
 
 //-- }
+
 
 
 //
@@ -559,9 +546,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: HDC を使用する描画コードをここに追加してください...
 
             //-- {
+            // Draw logs
             TEXTMETRIC tm;
             GetTextMetrics(hdc, &tm);
-            int y = 0;
+            TextOut(hdc, 0, 0, L"Log:", 4);
+            int y = tm.tmHeight;
             for (int i = 0; i < MAX_LINE_LOG; ++i) {
                 if (i == l_nLogIndex - 1 || (i == MAX_LINE_LOG - 1 && l_nLogIndex == 0)) {
                     SetTextColor(hdc, RGB(0x00, 0x00, 0x00));
