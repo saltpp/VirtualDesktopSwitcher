@@ -5,7 +5,7 @@ A tool to switch between virtual desktops on Windows 10 by using the mouse.
 
 
 ## Installation
-- Download zip file from https://github.com/saltpp/VirtualDesktopSwitcher/releases and extract it
+- Download the zip file from https://github.com/saltpp/VirtualDesktopSwitcher/releases and then extract it
 - Place VDS.exe and VDS.ini in any directory
 - Launch VDS.exe, ↔ icon is added in the TaskTray
 
