@@ -6,6 +6,7 @@ Windows 10 の仮想デスクトップをマウスで切り替えるツールで
 
 
 ## インストール方法
+- https://github.com/saltpp/VirtualDesktopSwitcher/releases から zip ファイルをダウンロードして解凍してください
 - VDS.exe と VDS.ini を任意のディレクトリに置いてください
 - VDS.exe を起動すると、↔ アイコンがタスクトレイに追加されます
 
