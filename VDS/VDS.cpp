@@ -54,8 +54,6 @@ THE SOFTWARE.
 #include <shellapi.h>
 #include "VirtualDesktopsAPI.h"
 
-EXTERN_C const GUID CLSID_ImmersiveShell = { 0xC2F03A33, 0x21F5, 0x47FA, 0xB4, 0xBB, 0x15, 0x63, 0x62, 0xA2, 0xF2, 0x39 };
-
 #define ARRAY_SIZE_OF(a) (sizeof(a) / sizeof(a[0]))
 
 #define ID_TIMER (1000)
@@ -78,7 +76,13 @@ static bool l_bNeedControl;
 static bool l_bShow;
 static HMENU l_menuTaskTray;
 
-static VirtualDesktops::API::IVirtualDesktopManagerInternal* l_pVirtualDesktopManagerInternal = NULL;
+typedef int(*GoToDesktopNumberFunc)(int);
+typedef int(*GetCurrentDesktopNumberFunc)();
+typedef int(*MoveWindowToDesktopNumberFunc)(HWND, int);
+static GoToDesktopNumberFunc GoToDesktopNumber = nullptr;
+static GetCurrentDesktopNumberFunc GetCurrentDesktopNumber = nullptr;
+static MoveWindowToDesktopNumberFunc MoveWindowToDesktopNumber = nullptr;
+static HMODULE l_hLibVirtualDesktopAccessor = nullptr;
 //-- }
 
 #define MAX_LOADSTRING 100
@@ -245,17 +249,17 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     ReadIniFile();
     Log(L"duration=%d..%d", l_nInterval * l_nIntervalCount, l_nInterval * (l_nIntervalCount + 1));
 
-    // Get virtual desktop api
-    IServiceProvider* pServiceProvider = NULL;
-    HRESULT hResult = ::CoCreateInstance(CLSID_ImmersiveShell, NULL, CLSCTX_LOCAL_SERVER, __uuidof(IServiceProvider), (PVOID*)&pServiceProvider);
-    if (FAILED(hResult)) {
-        return hResult;
+    // Load VirtualDesktopAccessor
+    l_hLibVirtualDesktopAccessor = LoadLibrary(L"VirtualDesktopAccessor.dll");
+    if (l_hLibVirtualDesktopAccessor) {
+        GoToDesktopNumber = (GoToDesktopNumberFunc)GetProcAddress(l_hLibVirtualDesktopAccessor, "GoToDesktopNumber");
+        GetCurrentDesktopNumber = (GetCurrentDesktopNumberFunc)GetProcAddress(l_hLibVirtualDesktopAccessor, "GetCurrentDesktopNumber");
+        MoveWindowToDesktopNumber = (MoveWindowToDesktopNumberFunc)GetProcAddress(l_hLibVirtualDesktopAccessor, "MoveWindowToDesktopNumber");
+        Log(L"Loaded VirtualDesktopAccessor.dll");
     }
-    hResult = pServiceProvider->QueryService(VirtualDesktops::API::CLSID_VirtualDesktopAPI_Unknown, &l_pVirtualDesktopManagerInternal);
-    if (FAILED(hResult)) {
-        return hResult;
+    else {
+        Log(L"Failed to load VirtualDesktopAccessor.dll");
     }
-    pServiceProvider->Release();
 
     // Get edge position
     RECT rect;
@@ -288,9 +292,10 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
 
 void Uninit(HWND hWnd) {
 
-    // Release virtual desktop api
-    if (l_pVirtualDesktopManagerInternal) {
-        l_pVirtualDesktopManagerInternal->Release();
+    // Release VirtualDesktopAccessor
+    if (l_hLibVirtualDesktopAccessor) {
+        FreeLibrary(l_hLibVirtualDesktopAccessor);
+        l_hLibVirtualDesktopAccessor = nullptr;
     }
 
     // Kill timer
@@ -363,86 +368,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 //-- {
 
-VirtualDesktops::API::IVirtualDesktop* GetDesktopLeftRight(bool bLeft) {
-
-    VirtualDesktops::API::IVirtualDesktop* pDesktop = nullptr;
-    HRESULT hr = l_pVirtualDesktopManagerInternal->GetCurrentDesktop(&pDesktop);
-    if (FAILED(hr)) {
-        return NULL;
-    }
-
-    VirtualDesktops::API::IVirtualDesktop* pAdjacentDesktop = nullptr;
-    hr = l_pVirtualDesktopManagerInternal->GetAdjacentDesktop(
-        pDesktop,
-        bLeft ? VirtualDesktops::API::AdjacentDesktop::LeftDirection : VirtualDesktops::API::AdjacentDesktop::RightDirection,
-        &pAdjacentDesktop);
-
-    pDesktop->Release();
-
-    if (FAILED(hr)) {
-        return NULL;
-    }
-
-    GUID guid;
-    hr = pAdjacentDesktop->GetID(&guid);
-    if (SUCCEEDED(hr)) {
-        return pAdjacentDesktop;        // Need to be released
-    }
-
-    pAdjacentDesktop->Release();
-    return NULL;
-}
-
-
 #define BIT_PRESSED (0x8000)
-
-bool SwitchDesktopLeftRight(bool bLeft, POINT pointCursor) {
-
-    VirtualDesktops::API::IVirtualDesktop* pAdjacentDesktop = GetDesktopLeftRight(bLeft);
-    if (pAdjacentDesktop != NULL) {
-
-        // Check dragging
-        HWND hWndForeground = NULL;
-        long lExStyle = 0;
-        RECT rect;
-        if (GetKeyState(VK_LBUTTON) & BIT_PRESSED) {
-            hWndForeground = GetForegroundWindow();
-
-            GetWindowRect(hWndForeground, &rect);
-            #define WIDTH_FRAME (16)
-            if (rect.left + WIDTH_FRAME < pointCursor.x
-                    && rect.right - WIDTH_FRAME > pointCursor.x
-                    && rect.top < pointCursor.y
-                    && rect.bottom > pointCursor.y) {
-                Log(L"hWndForeground=%08X", hWndForeground);
-                lExStyle = GetWindowLong(hWndForeground, GWL_EXSTYLE);   // Get current ex-style
-                SetWindowLong(hWndForeground, GWL_EXSTYLE, WS_EX_TOOLWINDOW);   // Change ex-style to move desktop
-            }
-            else {
-                hWndForeground = NULL;
-            }
-        }
-
-        // Switch desktop
-        l_pVirtualDesktopManagerInternal->SwitchDesktop(pAdjacentDesktop);
-        pAdjacentDesktop->Release();
-
-        // Move cursor and window if dragging
-        int nCursorX = bLeft ? (l_nEdgeRight - 1) : (l_nEdgeLeft + 1);
-        int dx = pointCursor.x - nCursorX;
-
-        if (hWndForeground != NULL) {
-            SetWindowLong(hWndForeground, GWL_EXSTYLE, lExStyle);   // Restore ex-style
-            SetWindowPos(hWndForeground, HWND_TOP, rect.left - dx, rect.top, 0, 0, SWP_NOSIZE); 
-        }
-        SetCursorPos(nCursorX, pointCursor.y);
-
-        return TRUE;
-    }
-    else {
-        return FALSE;
-    }
-}
 
 
 void wm_timer(HWND hWnd) {
@@ -487,15 +413,32 @@ void wm_timer(HWND hWnd) {
 
         if (l_nEdgeCount >= l_nIntervalCount) {
             l_nEdgeCount = 0;
-            if (pt.x == l_nEdgeLeft) {
-                if (SwitchDesktopLeftRight(true, pt)) {
-                    Log(L"switched to the left desktop");
+            if (GetCurrentDesktopNumber != nullptr && GoToDesktopNumber != nullptr) {
+                int currentDesktop = GetCurrentDesktopNumber();
+
+                int targetDesktop = currentDesktop;
+                if (pt.x == l_nEdgeLeft) {
+                    targetDesktop = currentDesktop - 1;
                 }
-            }
-            else /* if (pt.x == l_nEdgeRight || pt.x == l_nEdgeRight + 1) */ {
-                if (SwitchDesktopLeftRight(false, pt)) {
-                    Log(L"switched to the right desktop");
+                else /* if (pt.x == l_nEdgeRight || pt.x == l_nEdgeRight + 1) */ {
+                    targetDesktop = currentDesktop + 1;
                 }
+
+                // If left mouse button is pressed and we are hitting the edge, drag the top window
+                if (GetKeyState(VK_LBUTTON) & 0x8000) {
+                    HWND hWndForeground = GetForegroundWindow();
+                    if (MoveWindowToDesktopNumber != nullptr && hWndForeground != nullptr) {
+                        MoveWindowToDesktopNumber(hWndForeground, targetDesktop);
+                        Log(L"Moving window %08X to desktop %d", hWndForeground, targetDesktop);
+                    }
+                }
+
+                GoToDesktopNumber(targetDesktop);
+                Log(L"Switched to desktop (%d)", targetDesktop);
+
+                // Move cursor slightly off the edge so it doesn't immediately wrap again
+                int nCursorX = (pt.x == l_nEdgeLeft) ? (l_nEdgeRight - 1) : (l_nEdgeLeft + 1);
+                SetCursorPos(nCursorX, pt.y);
             }
         }
     }
