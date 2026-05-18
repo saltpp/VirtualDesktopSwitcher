@@ -1,5 +1,6 @@
 # Virtual Desktop Switcher for Windows 10
 A tool to switch between virtual desktops on Windows 10 by using the mouse.
+This branch is for Windows 10. Windows 11 development is ongoing in the main branch.
 
 [Japanese README](README.ja.md)
 

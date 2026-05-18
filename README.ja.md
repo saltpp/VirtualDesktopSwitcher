@@ -1,6 +1,6 @@
-
 # Virtual Desktop Switcher for Windows 10
 Windows 10 の仮想デスクトップをマウスで切り替えるツールです。
+この　branch は Windows 10 用です。Windows 11 用は main branch で開発中です。
 
 [English README](README.md)
 
