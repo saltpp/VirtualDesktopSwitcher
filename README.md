@@ -20,24 +20,31 @@ A tool to switch between virtual desktops on Windows 11 by using the mouse.
 - You need to create several virtual desktops before using this app. ([Win]+[Tab] → [New desktop] or [Ctrl]+[Win]+[d])
 
 
+## Note
+- Windows Defender SmartScreen may display a warning when launching the app for the first time. If the warning appears, click "More info" and then "Run anyway".
+
+
 ## Acknowledgements
-This app uses the [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) library.
+- This app uses the [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) library.
 
 
 ## History
+- Ver.1.3.1
+  - Fixed an issue where a pinned window became unpinned after switching virtual desktops while dragging it
+
 - Ver.1.3.0
   - Support Windows 11 by using the [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) library
 
 - Ver.1.2.0
-  - Modify log display area
-  - Modify the README.md/.html
+  - Modified log display area
+  - Modified the README.md/.html
 
 - Ver.1.1.0
-  - Add function to switch virtual desktop while dragging window
+  - Added function to switch virtual desktop while dragging window
 
 - Ver.1.0.0
   - First release
 
 
 ## License
-MIT
+- MIT

@@ -20,11 +20,17 @@ Windows 11 の仮想デスクトップをマウスで切り替えるツールで
 - このアプリを使う前に複数の仮想デスクトップを作っておく必要があります。（[Win]+[Tab] → [新しいデスクトップ] or [Ctrl]+[Win]+[d]）
 
 
+## 注意
+- 初回起動時に Windows Defender SmartScreen の警告が表示される場合があります。その場合は、「詳細情報」→「実行」を選択してください。
+
+
 ## 謝辞
-このアプリは、[VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) ライブラリを使用しています。
+- このアプリは、[VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) ライブラリを使用しています。
 
 
-## History
+## 履歴
+- Ver.1.3.1
+  - ピン設定されたウィンドウをドラッグして仮想画面を切り替えるとピン設定が外れる問題を修正
 
 - Ver.1.3.0
   - [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) ライブラリを利用することで、Windows11 に対応
@@ -41,4 +47,4 @@ Windows 11 の仮想デスクトップをマウスで切り替えるツールで
 
 
 ## ライセンス
-MIT
+- MIT
