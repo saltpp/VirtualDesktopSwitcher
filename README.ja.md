@@ -24,6 +24,10 @@ Windows 11 の仮想デスクトップをマウスで切り替えるツールで
 - 初回起動時に Windows Defender SmartScreen の警告が表示される場合があります。その場合は、「詳細情報」→「実行」を選択してください。
 
 
+## デモ
+- https://youtu.be/0UlkJ2dO8nw
+
+
 ## 謝辞
 - このアプリは、[VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) ライブラリを使用しています。
 

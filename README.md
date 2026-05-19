@@ -24,6 +24,10 @@ A tool to switch between virtual desktops on Windows 11 by using the mouse.
 - Windows Defender SmartScreen may display a warning when launching the app for the first time. If the warning appears, click "More info" and then "Run anyway".
 
 
+## Demo
+- https://youtu.be/0UlkJ2dO8nw
+
+
 ## Acknowledgements
 - This app uses the [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) library.
 
