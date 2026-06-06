@@ -27,12 +27,15 @@
     <ClInclude Include="VDS.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="VirtualDesktopsAPI.h">
+    <ClInclude Include="ThreadSetCursorPos.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VDS.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadSetCursorPos.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,5 +51,8 @@
     <Image Include="VDS.ico">
       <Filter>リソース ファイル</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\libs\VirtualDesktopAccessor\VirtualDesktopAccessor.dll" />
   </ItemGroup>
 </Project>

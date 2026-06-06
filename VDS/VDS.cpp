@@ -39,6 +39,7 @@ THE SOFTWARE.
 
 //-- {
 #include <shellapi.h>
+#include "ThreadSetCursorPos.h"
 
 #define ARRAY_SIZE_OF(a) (sizeof(a) / sizeof(a[0]))
 
@@ -287,6 +288,9 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     // Set timer
     SetTimer(hWnd, ID_TIMER, l_nInterval, (TIMERPROC)NULL);
 
+    // Create thread to move cursor
+    CreateThreadSetCursorPos();
+
     return S_OK;
 }
 
@@ -307,6 +311,8 @@ void Uninit(HWND hWnd) {
     // Destroy menu for tasktray
     DestroyMenu(l_menuTaskTray);
 
+    // Destroy thread
+    DestroyThreadSetCursorPos();
 }
 
 //-- }
@@ -446,9 +452,13 @@ void wm_timer(HWND hWnd) {
                 GoToDesktopNumber(targetDesktop);
                 Log(L"Switched to desktop %d", targetDesktop);
 
-                // Move cursor slightly off the edge so it doesn't immediately wrap again
+                // Move cursor to the opposite edge
                 int nCursorX = (pt.x == l_nEdgeLeft) ? (l_nEdgeRight - 1) : (l_nEdgeLeft + 1);
+                // SetCursorPos(nCursorX, pt.y);
+                Sleep(20);
                 SetCursorPos(nCursorX, pt.y);
+                Sleep(20);
+                RequestSetCursorPos(nCursorX, pt.y);
             }
         }
     }

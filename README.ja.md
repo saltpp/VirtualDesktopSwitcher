@@ -1,5 +1,6 @@
-# Virtual Desktop Switcher for Windows 11
+# VDS (Virtual Desktop Switcher)
 Windows 11 の仮想デスクトップをマウスで切り替えるツールです。
+Windows 10 では Ver.1.2.0 をご利用ください。Ver.1.3.0 以降は Windows 11 でしか動かないです。
 
 [English README](README.md)
 
@@ -33,8 +34,11 @@ Windows 11 の仮想デスクトップをマウスで切り替えるツールで
 
 
 ## 履歴
+- Ver.1.3.2
+  - タスクマネージャなど管理者権限で動いているアプリのウィンドウをドラッグして仮想デスクトップを切り替えるとマウスカーソルを制御できなかった問題を修正
+
 - Ver.1.3.1
-  - ピン設定されたウィンドウをドラッグして仮想画面を切り替えるとピン設定が外れる問題を修正
+  - ピン設定されたウィンドウをドラッグして仮想デスクトップを切り替えるとピン設定が外れる問題を修正
 
 - Ver.1.3.0
   - [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor) ライブラリを利用することで、Windows11 に対応

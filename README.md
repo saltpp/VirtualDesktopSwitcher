@@ -1,5 +1,6 @@
-# Virtual Desktop Switcher for Windows 11
-A tool to switch between virtual desktops on Windows 11 by using the mouse.
+# VDS (Virtual Desktop Switcher)
+A tool to switch between virtual desktops on Windows 11 using the mouse.
+For Windows 10, please use Ver.1.2.0. Ver.1.3.0 or later works only on Windows 11.
 
 [Japanese README](README.ja.md)
 
@@ -33,6 +34,9 @@ A tool to switch between virtual desktops on Windows 11 by using the mouse.
 
 
 ## History
+- Ver.1.3.2
+  - Fixed an issue where the mouse cursor could not be controlled when switching virtual desktops while dragging administrator-privileged windows such as Task Manager
+
 - Ver.1.3.1
   - Fixed an issue where a pinned window became unpinned after switching virtual desktops while dragging it
 
