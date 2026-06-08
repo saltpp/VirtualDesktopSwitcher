@@ -56,3 +56,7 @@ For Windows 10, please use Ver.1.2.0. Ver.1.3.0 or later works only on Windows 1
 
 ## License
 - MIT
+
+
+## Others
+- [Buy me a coffee](https://www.buymeacoffee.com/saltpp)
