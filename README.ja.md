@@ -56,3 +56,8 @@ Windows 10 では Ver.1.2.0 をご利用ください。Ver.1.3.0 以降は Windo
 
 ## ライセンス
 - MIT
+
+
+## その他
+- [寄付](https://www.buymeacoffee.com/saltpp)
+
