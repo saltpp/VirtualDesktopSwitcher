@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2021 Tomoki Shiono
@@ -274,6 +274,12 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
     }
     else {
         Log(L"Failed to load VirtualDesktopAccessor.dll");
+        MessageBox(hWnd,
+            L"VirtualDesktopAccessor.dll could not be loaded.\n"
+            L"Make sure VirtualDesktopAccessor.dll is in the same folder as VDS.exe and matches its architecture (x64 / Win32).\n"
+            L"VDS will now exit.",
+            szTitle, MB_OK | MB_ICONERROR);
+        return E_FAIL;
     }
 
     // Get edge position
@@ -361,7 +367,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
     //-- {
-    Init(hInstance, hWnd);
+    if (FAILED(Init(hInstance, hWnd))) {
+        DestroyWindow(hWnd);
+        return FALSE;
+    }
 
     l_bShow = false;
     ShowWindow(hWnd, SW_HIDE);
