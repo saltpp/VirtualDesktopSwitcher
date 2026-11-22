@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2021 Tomoki Shiono
@@ -386,20 +386,20 @@ void wm_timer(HWND hWnd) {
     }
 
     // Check mouse button
-    if (GetKeyState(VK_RBUTTON) & BIT_PRESSED
-        || GetKeyState(VK_MBUTTON) & BIT_PRESSED) {
+    if (GetAsyncKeyState(VK_RBUTTON) & BIT_PRESSED
+        || GetAsyncKeyState(VK_MBUTTON) & BIT_PRESSED) {
         l_nEdgeCount = 0;
         return;
     }
 
     // Check shift key if needed
-    if (l_bNeedShift && !(GetKeyState(VK_SHIFT) & BIT_PRESSED)) {
+    if (l_bNeedShift && !(GetAsyncKeyState(VK_SHIFT) & BIT_PRESSED)) {
         l_nEdgeCount = 0;
         return;
     }
 
     // Check control key if needed
-    if (l_bNeedControl && !(GetKeyState(VK_CONTROL) & BIT_PRESSED)) {
+    if (l_bNeedControl && !(GetAsyncKeyState(VK_CONTROL) & BIT_PRESSED)) {
         l_nEdgeCount = 0;
         return;
     }
@@ -437,7 +437,7 @@ void wm_timer(HWND hWnd) {
                 }
 
                 // If left mouse button is pressed and we are hitting the edge, drag the top window
-                if (GetKeyState(VK_LBUTTON) & 0x8000) {
+                if (GetAsyncKeyState(VK_LBUTTON) & BIT_PRESSED) {
                     HWND hWndForeground = GetForegroundWindow();
                     if (hWndForeground != nullptr) {
                         if (IsPinnedWindow != nullptr && !IsPinnedWindow(hWndForeground)) {
