@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2021 Tomoki Shiono
@@ -276,6 +276,30 @@ int Init(HINSTANCE hInstance, HWND hWnd) {
         Log(L"Failed to load VirtualDesktopAccessor.dll");
     }
 
+    // The core functions are required. GetDesktopCount is required as well, so
+    // that wm_timer never passes an out-of-range desktop number to
+    // GoToDesktopNumber when the DLL does not match this version of VDS.
+    if (GoToDesktopNumber == nullptr || GetCurrentDesktopNumber == nullptr || GetDesktopCount == nullptr) {
+        MessageBox(hWnd,
+            L"VirtualDesktopAccessor.dll is not compatible with this version of VDS.\n"
+            L"Some required functions were not found in the DLL.\n"
+            L"VDS will now exit.",
+            szTitle, MB_OK | MB_ICONERROR);
+        if (l_hLibVirtualDesktopAccessor) {
+            FreeLibrary(l_hLibVirtualDesktopAccessor);
+            l_hLibVirtualDesktopAccessor = nullptr;
+        }
+        return E_FAIL;
+    }
+
+    // Dragging a window to another desktop needs both of these. Disable the
+    // feature if either one is missing in the DLL.
+    if (MoveWindowToDesktopNumber == nullptr || IsPinnedWindow == nullptr) {
+        MoveWindowToDesktopNumber = nullptr;
+        IsPinnedWindow = nullptr;
+        Log(L"Dragging windows between desktops is disabled");
+    }
+
     // Get edge position
     UpdateEdgePosition();
 
@@ -361,7 +385,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
     //-- {
-    Init(hInstance, hWnd);
+    if (FAILED(Init(hInstance, hWnd))) {
+        DestroyWindow(hWnd);
+        return FALSE;
+    }
 
     l_bShow = false;
     ShowWindow(hWnd, SW_HIDE);
